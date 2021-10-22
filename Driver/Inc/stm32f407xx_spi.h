@@ -1,11 +1,12 @@
 /*
- * stm32f407xx_spi_driver.h
+ * stm32f407xx_spi.h
  *
- *  Created on: Oct 13, 2021
- *      Author: COMPUTER
+ *  Created on: Oct 20, 2021
+ *      Author: caoth
  */
-#ifndef STM32F407XX_SPI_DRIVER_H_
-#define STM32F407XX_SPI_DRIVER_H_
+
+#ifndef INC_STM32F407XX_SPI_H_
+#define INC_STM32F407XX_SPI_H_
 
 #include "stm32f407xx.h"
 
@@ -46,8 +47,8 @@ typedef struct {
 #define SPI_SCLK_SPEED_DIV256			7
 
 //Define SPI_DFF
-#define SPI_DFF_8BITS 					1
-#define SPI_DFF_16BITS					0
+#define SPI_DFF_8BITS 					0
+#define SPI_DFF_16BITS					1
 
 //Define CPOL
 #define SPI_CPOL_HIGH 					1
@@ -61,16 +62,13 @@ typedef struct {
 #define SPI_SSM_ENABLE					1
 #define SPI_SSM_DISABLE					0
 
-
-
-
 /*APIs support by this driver*/
 
 //Peripheral Clock setup
 void SPI_PeriClockControl(SPI_RegDef_t *pSPIx, uint8_t EnorDi);
 //Init and De-init
-void SPI_Init(SPI_Handle_t *pSPIHandle);
-void SPI_DeInit(SPI_Handle_t *pSPIHandle);
+void SPI_Init(SPI_Handle_t *pSPIHandle,SPI_RegDef_t *pSPIx);
+void SPI_DeInit(SPI_RegDef_t *pSPIx);
 
 //Data Send and Receive
 void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t LenData);
@@ -85,5 +83,6 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi);
 void SPI_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi);
 void SPI_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority);
 void SPI_IRQHandling(SPI_Handle_t *pHandle);
-
-#endif /* STM32F407XX_SPI_DRIVER_H_ */
+/////
+uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName);
+#endif /* INC_STM32F407XX_SPI_H_ */

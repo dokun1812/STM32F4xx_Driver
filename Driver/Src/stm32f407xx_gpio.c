@@ -53,7 +53,6 @@ void GPIO_PeriphClkControl(GPIO_RegDef *pGPIOx, uint8_t ENorDI){
 
 void GPIO_Init(GPIO_Handle *pGPIO_Handle){
 	uint32_t temp=0;
-	GPIO_PeriphClkControl(pGPIO_Handle->pGPIOx, ENABLE);
 	if(pGPIO_Handle->GPIO_PinConf.GPIO_PinMode <= GPIO_MODE_ANALOG){
 		//MODE NO INTERUPT
 		temp=(pGPIO_Handle->GPIO_PinConf.GPIO_PinMode <<(2 * pGPIO_Handle->GPIO_PinConf.GPIO_PinNumber));
@@ -118,7 +117,7 @@ uint16_t GPIO_ReadInputPort(GPIO_RegDef *pGPIOx){
 	return value;
 }
 void GPIO_WriteOutputPin(GPIO_RegDef *pGPIOx, uint8_t PinNumber, uint8_t State){
-	if(State== GPIO_PIN_SET){
+	if(State==GPIO_PIN_SET){
 		pGPIOx->ODR |= (1<<PinNumber);
 	}else{
 		pGPIOx->ODR &= ~(1<<PinNumber);

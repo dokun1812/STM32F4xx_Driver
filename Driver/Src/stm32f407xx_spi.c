@@ -1,11 +1,11 @@
 /*
- * stm32f407xx_spi_driver.c
+ * stm32f407xx_spi.c
  *
- *  Created on: Oct 13, 2021
- *      Author: COMPUTER
+ *  Created on: Oct 20, 2021
+ *      Author: caoth
  */
 
-#include "stm32f407xx_spi_driver.h"
+#include "stm32f407xx_spi.h"
 
 /**
   * @brief  SPI_PeriClockControl
@@ -50,15 +50,14 @@ void SPI_PeriClockControl(SPI_RegDef_t *pSPIx, uint8_t EnorDi)
   * @param  pointer SPIHandle store base address SPI peripheral and SPI Config
   * @retval None
   */
-void SPI_Init(SPI_Handle_t *pSPIHandle)
+void SPI_Init(SPI_Handle_t *pSPIHandle, SPI_RegDef_t *pSPIx)
 {
 	//configure SPI_CR1 register
 	uint32_t tempreg = 0;
 	//enable SPI clock
-	SPI_PeriClockControl(pSPIHandle->pSPIx, ENABLE);
 	//1. configure device mode: Master
-	tempreg |= pSPIHandle->SPIConfig.SPI_DeviceMode << SPI_CR1_MSTR_POS;
-
+	tempreg |= (pSPIHandle->SPIConfig.SPI_DeviceMode << SPI_CR1_MSTR_POS);
+	//SET_BIT(pSPIx->CR1,SPI_CR1_MSTR);
 	//2. configure SPI bus
 	if (pSPIHandle->SPIConfig.SPI_BusConfig == SPI_BUS_CONFIG_FULLDUPLEX)
 	{
@@ -79,13 +78,15 @@ void SPI_Init(SPI_Handle_t *pSPIHandle)
 	//3. configure spi serial clock speed
 	tempreg |= pSPIHandle->SPIConfig.SPI_Sclk_Speed << SPI_CR1_BR_POS;
 	//4. configure DFF: 16bit
-	tempreg |= pSPIHandle->SPIConfig.SPI_Sclk_Speed << SPI_CR1_DFF_POS;
+	tempreg |= pSPIHandle->SPIConfig.SPI_DFF << SPI_CR1_DFF_POS;
 	//5. configure CPOL = 1
-	tempreg |= pSPIHandle->SPIConfig.SPI_Sclk_Speed << SPI_CR1_CPOL_POS;
+	tempreg |= pSPIHandle->SPIConfig.SPI_CPOL << SPI_CR1_CPOL_POS;
 	//6. configure CPHA = 1
-	tempreg |= pSPIHandle->SPIConfig.SPI_Sclk_Speed << SPI_CR1_CPHA_POS;
+	tempreg |= pSPIHandle->SPIConfig.SPI_CPHA << SPI_CR1_CPHA_POS;
+	//7. configure CPHA = 1
+	tempreg |= pSPIHandle->SPIConfig.SPT_SSM << SPI_CR1_SSM_POS;
 	//save value of tempreg into CR1
-	pSPIHandle->pSPIx->CR1 = tempreg;
+	pSPIx->CR1 = tempreg;
 }
 
 /**
@@ -95,10 +96,15 @@ void SPI_Init(SPI_Handle_t *pSPIHandle)
   * @param  Enable or Disable Clock
   * @retval None
   */
-void SPI_DeInit(SPI_Handle_t *pSPIHandle)
+void SPI_DeInit(SPI_RegDef_t *pSPIx)
 {
-	SPI_PeriClockControl(pSPIHandle->pSPIx,DISABLE);
-	pSPIHandle->pSPIx->CR1 = 0;
+	if(pSPIx==SPI1){
+		SPI1_REG_RESET();
+	}else if(pSPIx==SPI2){
+		SPI2_REG_RESET();
+	}else if(pSPIx==SPI3){
+		SPI3_REG_RESET();
+	}
 }
 
 uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx, uint32_t FlagName)
@@ -122,10 +128,11 @@ void SPI_SSIConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi)
 {
 	if(EnorDi == ENABLE)
 		{
-			SET_BIT(pSPIx->CR1,SPI_CR1_SSI_POS);
+			//SET_BIT(pSPIx->CR1,SPI_CR1_MSTR);
+			SET_BIT(pSPIx->CR1,SPI_CR1_SSI);
 		} else
 		{
-			CLEAR_BIT(pSPIx->CR1,SPI_CR1_SSI_POS);
+			CLEAR_BIT(pSPIx->CR1,SPI_CR1_SSI);
 		}
 }
 /**
@@ -140,10 +147,10 @@ void SPI_SSOEConfig(SPI_RegDef_t *pSPIx, uint8_t EnorDi)
 {
 	if(EnorDi == ENABLE)
 			{
-				SET_BIT(pSPIx->CR1,SPI_CR2_SSOE);
+				SET_BIT(pSPIx->CR2,SPI_CR2_SSOE);
 			} else
 			{
-				CLEAR_BIT(pSPIx->CR1,SPI_CR2_SSOE);
+				CLEAR_BIT(pSPIx->CR2,SPI_CR2_SSOE);
 			}
 }
 
@@ -175,7 +182,7 @@ void SPI_PeripheralControl(SPI_RegDef_t *pSPIx, uint8_t EnorDi)
   * @note
   * @retval None
   */
-void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t LenData)
+void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t * pTxBuffer, uint32_t LenData)
 {
 	while (LenData > 0)
 	{
@@ -187,14 +194,14 @@ void SPI_SendData(SPI_RegDef_t *pSPIx, uint8_t *pTxBuffer, uint32_t LenData)
 		{
 			//DFF 16 bit
 			//1. load data from TxBuffer into DR
-			pSPIx->DR = *((uint16_t*)pTxBuffer);
+			pSPIx->DR |= *((uint16_t*)pTxBuffer);
 			LenData--;
 			LenData--;
 			(uint16_t*)pTxBuffer++;
 		} else
 		{
 			//DFF 8 bit
-			pSPIx->DR = *(pTxBuffer);
+			pSPIx->DR = *pTxBuffer;
 			LenData--;
 			pTxBuffer++;
 		}
@@ -234,4 +241,5 @@ void SPI_ReceiveData(SPI_RegDef_t *pSPIx, uint8_t *pRxBuffer, uint32_t LenData)
 		}
 	}
 }
+
 

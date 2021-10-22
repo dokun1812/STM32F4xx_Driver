@@ -1,12 +1,5 @@
-/*
- * stm32f407xx_gpio.h
- *
- *  Created on: Oct 13, 2021
- *      Author: caoth
- */
-
-#ifndef STM32F407XX_GPIO_H_
-#define STM32F407XX_GPIO_H_
+#ifndef INC_STM32F407XX_GPIO_H_
+#define INC_STM32F407XX_GPIO_H_
 
 #include "stm32f407xx.h"
 
@@ -26,7 +19,6 @@ typedef struct
 	GPIO_RegDef *pGPIOx;
 	GPIO_PinConfig GPIO_PinConf;
 }GPIO_Handle;
-
 
 //PIN NUMBER
 #define GPIO_PIN_0  		0
@@ -84,4 +76,4 @@ void GPIO_ToggleOutputPin(GPIO_RegDef *pGPIOx, uint8_t PinNumber);
 void GPIO_IRQConfig(uint8_t IRQNumber, uint8_t IRQPriority, uint8_t ENorDI);
 void GPIO_IRQHandle(uint8_t PinNumber);
 
-#endif /* STM32F407XX_GPIO_H_ */
+#endif /* __STM32F407XX_GPIO_H_ */
